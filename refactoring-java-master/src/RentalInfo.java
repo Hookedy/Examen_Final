@@ -1,52 +1,64 @@
 import java.util.HashMap;
 
 public class RentalInfo {
+    private HashMap<String, Movie> movies;
 
-  public String statement(Customer customer) {
-    HashMap<String, Movie> movies = new HashMap<String, Movie>();
-    movies.put("F001", new Movie("You've Got Mail", "regular"));
-    movies.put("F002", new Movie("Matrix", "regular"));
-    movies.put("F003", new Movie("Cars", "childrens"));
-    movies.put("F004", new Movie("Fast & Furious X", "new"));
-
-    double totalAmount = 0;
-    int frequentEnterPoints = 0;
-    String result = "Rental Record for " + customer.getName() + "\n";
-    for (MovieRental r : customer.getRentals()) {
-      double thisAmount = 0;
-
-      // determine amount for each movie
-      Movie movie = movies.get(r.getMovieId());
-      if (movie.getCode().equals("regular")) {
-        thisAmount = 2;
-        if (r.getDays() > 2) {
-          thisAmount = ((r.getDays() - 2) * 1.5) + thisAmount;
-        }
-      }
-      if (movie.getCode().equals("new")) {
-        thisAmount = r.getDays() * 3;
-      }
-      if (movie.getCode().equals("childrens")) {
-        thisAmount = 1.5;
-        if (r.getDays() > 3) {
-          thisAmount = ((r.getDays() - 3) * 1.5) + thisAmount;
-        }
-      }
-
-      // add frequent bonus points
-      frequentEnterPoints++;
-      // add bonus for a two day new release rental
-      if (movie.getCode().equals("new") && r.getDays() > 2) frequentEnterPoints++;
-
-      // print figures for this rental
-      result += "\t" + movie.getTitle() + "\t" + thisAmount + "\n";
-      totalAmount = totalAmount + thisAmount;
+    public RentalInfo() {
+        movies = new HashMap<String, Movie>();
+        movies.put("F001", new Movie("You've Got Mail", "regular"));
+        movies.put("F002", new Movie("Matrix", "regular"));
+        movies.put("F003", new Movie("Cars", "childrens"));
+        movies.put("F004", new Movie("Fast & Furious X", "new"));
     }
-    // add footer lines
-    result += "Amount owed is " + totalAmount + "\n";
-    result += "You earned " + frequentEnterPoints + " frequent points\n";
 
-    return result;
-  }
+    public String statement(Customer customer) {
+        double totalAmount = 0;
+        int frequentEnterPoints = 0;
+        StringBuilder resultBuilder = new StringBuilder("Rental Record for " + customer.getName() + "\n");
+
+        for (MovieRental rental : customer.getRentals()) {
+            Movie movie = movies.get(rental.getMovieId());
+            double thisAmount = calculateAmount(movie, rental);
+
+            frequentEnterPoints += calculateFrequentEnterPoints(movie, rental);
+
+            resultBuilder.append("\t").append(movie.getTitle()).append("\t").append(thisAmount).append("\n");
+            totalAmount += thisAmount;
+        }
+
+        resultBuilder.append("Amount owed is ").append(totalAmount).append("\n");
+        resultBuilder.append("You earned ").append(frequentEnterPoints).append(" frequent points\n");
+
+        return resultBuilder.toString();
+    }
+
+    private double calculateAmount(Movie movie, MovieRental rental) {
+        double thisAmount = 0;
+
+        if (movie.getCode().equals("regular")) {
+            thisAmount = 2;
+            if (rental.getDays() > 2) {
+                thisAmount += (rental.getDays() - 2) * 1.5;
+            }
+        } else if (movie.getCode().equals("new")) {
+            thisAmount = rental.getDays() * 3;
+        } else if (movie.getCode().equals("childrens")) {
+            thisAmount = 1.5;
+            if (rental.getDays() > 3) {
+                thisAmount += (rental.getDays() - 3) * 1.5;
+            }
+        }
+
+        return thisAmount;
+    }
+
+    private int calculateFrequentEnterPoints(Movie movie, MovieRental rental) {
+        int frequentEnterPoints = 1;
+
+        if (movie.getCode().equals("new") && rental.getDays() > 2) {
+            frequentEnterPoints++;
+        }
+
+        return frequentEnterPoints;
+    }
 }
-
